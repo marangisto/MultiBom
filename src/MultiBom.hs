@@ -5,18 +5,22 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V
 import Control.Applicative
 import GHC.Exts (groupWith)
-import Data.List (sort, intercalate)
+import Data.List (sort, intercalate, findIndex)
 import Data.Csv
 
 data Options = Options
-    { files :: [FilePath]
+    { files :: [String]
     } deriving (Show, Eq, Data, Typeable)
 
 options :: Options
 options = Options { files = [] }
 
-csvFile :: FilePath -> FilePath
-csvFile f = "/home/marten" </> f </> f <.> "csv"
+csvFileCount :: String -> (FilePath, Int)
+csvFileCount s
+    | Just i <- pos = (f $ take i s, read $ drop (i + 1) s)
+    | otherwise = (f s, 1)
+    where pos = findIndex (=='=') s
+          f n = "/home/marten" </> n </> n <.> "csv"
 
 data Item = Item
     { reference :: !String
@@ -34,12 +38,14 @@ instance FromNamedRecord Item where
         <*> r .: " Footprint"
         <*> r .: " Datasheet"
 
-loadCSV :: FilePath -> IO [Item]
-loadCSV f = do
-    csv <- BL.readFile $ csvFile f
+loadCSV :: String -> IO [Item]
+loadCSV s = do
+    let (fn, count) = csvFileCount s
+        mul Item{..} = Item{quantity = count * quantity, ..}
+    csv <- BL.readFile fn
     return $ case decodeByName csv of
         Left e -> error e
-        Right v -> V.toList $ snd v
+        Right v -> map mul $ V.toList $ snd v
 
 columns :: String
 columns = intercalate "," [ "Footprint", "Value", "Quantity"]
