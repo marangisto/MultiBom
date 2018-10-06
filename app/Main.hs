@@ -1,4 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable, RecordWildCards, OverloadedStrings #-}
+module Main (main) where
+
 import System.Console.CmdArgs
 import System.FilePath
 import qualified Data.ByteString.Lazy as BL
@@ -12,8 +14,8 @@ data Options = Options
     { files :: [String]
     } deriving (Show, Eq, Data, Typeable)
 
-options :: Options
-options = Options { files = [] }
+options :: Main.Options
+options = Main.Options { files = [] }
 
 csvFileCount :: String -> (FilePath, Int)
 csvFileCount s
